@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GroupService {
 
     private final GroupRepository groupRepository;
-    private final List<GroupObserver> listeners;
+    private final List<GroupObserver> observers;
     private final GroupMapper groupMapper;
     private final ScheduleMapper scheduleMapper;
     private final UserRepository studentRepository;
@@ -75,7 +75,7 @@ public class GroupService {
 
         // Implementacion Observer ?
         if (oldQuotas != saved.getAvailableQuotas()) {
-            listeners.forEach(listener -> listener.updateAvailableCredits(saved.getNumberGroup(), oldQuotas,
+            observers.forEach(listener -> listener.updateAvailableCredits(saved.getNumberGroup(), oldQuotas,
                     saved.getAvailableQuotas()));
         }
         return groupMapper.toDto(saved);

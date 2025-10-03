@@ -1,11 +1,15 @@
 package edu.dosw.sirha.Services;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 
+import org.bson.types.ObjectId;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,6 +40,7 @@ public class RequestServiceTest {
 
     @Test
     void shouldCreateRequest() {
+
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime tomorrow = now.plusDays(1);
         RequestDTO request = RequestDTO.builder()
@@ -67,5 +72,71 @@ public class RequestServiceTest {
 
         assertEquals("123", response.getUserId());
     }
+    @Test
+    void shouldUpdateRequest() {
+        
+        ObjectId id = new ObjectId();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime tomorrow = now.plusDays(1);
+
+        Request existing = Request.builder()
+                .userId("777")
+                .creationDate(now)
+                .state(State.PENDIENT)
+                .build();
+
+        RequestDTO dto = RequestDTO.builder()
+                .responseDate(tomorrow)
+                .state(State.APPROVED)
+                .build();
+
+        Request updated = Request.builder()
+                .userId("777")
+                .creationDate(now)
+                .responseDate(tomorrow)
+                .state(State.APPROVED)
+                .build();
+
+        RequestResponseDTO responseDto = RequestResponseDTO.builder()
+                .userId("777")
+                .responseDate(tomorrow)
+                .state(State.APPROVED)
+                .build();
+
+        when(requestRepository.findById(id)).thenReturn(Optional.of(existing));
+        when(requestRepository.save(existing)).thenReturn(updated);
+        when(requestMapper.toDto(updated)).thenReturn(responseDto);
+
+        RequestResponseDTO result = requestService.updateRequest(id, dto);
+
+        assertEquals(State.APPROVED, result.getState());
+        assertEquals(tomorrow, result.getResponseDate());
+    }
+
+    @Test
+    void shouldDeleteRequest() {
+        ObjectId id = new ObjectId();
+        when(requestRepository.existsById(id)).thenReturn(true);
+
+        requestService.deleteRequest(id);
+
+        verify(requestRepository).deleteById(id);
+    }
+
+
+    @Test
+    void shouldReturnAllRequestsByStudent() {
+        Request request = Request.builder().userId("7").build();
+        RequestResponseDTO response = RequestResponseDTO.builder().userId("7").build();
+
+        when(requestRepository.findByUserId("7")).thenReturn(List.of(request));
+        when(requestMapper.toDtoList(List.of(request))).thenReturn(List.of(response));
+
+        List<RequestResponseDTO> result = requestService.allRequestByStudentId("7");
+
+        assertEquals(1, result.size());
+        assertEquals("7", result.get(0).getUserId());
+    }
+
 
 }
